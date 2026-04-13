@@ -5,7 +5,7 @@ import { DayDetails } from './components/DayDetails';
 import { HistoryList } from './components/HistoryList';
 import { LoginScreen } from './components/LoginScreen';
 import { QuickAddMeal } from './components/QuickAddMealDialog';
-import { RecipeCollectionPanel } from './components/RecipeCollectionPanel';
+import { RecipeCollectionDialogPanel } from './components/RecipeCollectionDialogPanel';
 import { StatsCard } from './components/StatsCard';
 import { INGREDIENTS_BY_ID, MEAL_LABELS, RECIPES, RECIPES_BY_ID } from './data/catalog';
 import {
@@ -33,6 +33,11 @@ const TABS = {
   history: 'history',
   kitchen: 'kitchen',
   cookbook: 'cookbook',
+};
+
+const DASHBOARD_PANELS = {
+  streaks: 'streaks',
+  calendar: 'calendar',
 };
 
 const ENRICHED_RECIPES = RECIPES.map((recipe) => ({
@@ -71,6 +76,7 @@ export default function App() {
   const [inventory, setInventory] = useState(() => normalizeInventory(loadInventory()));
   const [unlockedRecipeIds, setUnlockedRecipeIds] = useState(() => normalizeUnlockedRecipes(loadRecipes()));
   const [activeTab, setActiveTab] = useState(TABS.dashboard);
+  const [dashboardPanel, setDashboardPanel] = useState(DASHBOARD_PANELS.streaks);
   const [visibleMonth, setVisibleMonth] = useState(() => new Date());
   const [selectedDateKey, setSelectedDateKey] = useState(() => toDateKey(new Date()));
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
@@ -114,6 +120,14 @@ export default function App() {
 
   const handleAddMeal = async (values) => {
     const entry = createMealEntry(values);
+    const alreadyLoggedMeal = entries.some(
+      (currentEntry) => currentEntry.dateKey === entry.dateKey && currentEntry.mealType === values.mealType,
+    );
+
+    if (alreadyLoggedMeal) {
+      throw new Error('您今天已经上传过美味了哦！');
+    }
+
     const ingredientId = getRandomIngredientId(values.mealType, entry.id);
     const ingredient = INGREDIENTS_BY_ID[ingredientId];
     const reward = {
@@ -180,14 +194,16 @@ export default function App() {
             Log one meal, keep your streak alive, and unlock ingredients to build your own playful cookbook.
           </p>
         </div>
-        <div className="hero-chip">
-          <span className="hero-chip__label">Player</span>
-          <strong>{userProfile.name}</strong>
-        </div>
-        <div className="hero-chip">
-          <span className="hero-chip__label">Today</span>
-          <strong>{todayEntries ? 'Completed' : 'Still open'}</strong>
-          {latestReward ? <p className="hero-chip__hint">{latestReward}</p> : null}
+        <div className="hero-chips">
+          <div className="hero-chip">
+            <span className="hero-chip__label">Player</span>
+            <strong>{userProfile.name}</strong>
+          </div>
+          <div className="hero-chip">
+            <span className="hero-chip__label">Today</span>
+            <strong>{todayEntries ? 'Completed' : 'Still open'}</strong>
+            {latestReward ? <p className="hero-chip__hint">{latestReward}</p> : null}
+          </div>
         </div>
       </header>
 
@@ -224,37 +240,51 @@ export default function App() {
 
       {activeTab === TABS.dashboard ? (
         <main className="dashboard-layout">
-          <section className="stats-grid">
-            <StatsCard
-              label="Current streak"
-              value={`${currentStreak} day${currentStreak === 1 ? '' : 's'}`}
-              hint={todayEntries ? '今天已经保住连胜。' : '今天打卡一餐就能保住连胜。'}
-              accent="warm"
-            />
-            <StatsCard
-              label="Longest streak"
-              value={`${longestStreak} day${longestStreak === 1 ? '' : 's'}`}
-              hint="目前为止最好的记录。"
-              accent="cool"
-            />
-            <StatsCard
-              label="Pantry items"
-              value={inventory.length}
-              hint="还没使用的食材正在厨房里等你。"
-            />
-          </section>
-
-          <div className="content-grid">
-            <CalendarView
-              monthDate={visibleMonth}
-              selectedDateKey={selectedDateKey}
-              summaryByDate={summaryByDate}
-              onChangeMonth={handleChangeMonth}
-              onJumpToMonth={handleJumpToMonth}
-              onSelectDate={setSelectedDateKey}
-            />
-            <DayDetails dateKey={selectedDateKey} entries={selectedEntries} />
+          <div className="dashboard-switch" aria-label="Dashboard sections">
+            <button
+              className={dashboardPanel === DASHBOARD_PANELS.streaks ? 'tab-bar__button tab-bar__button--active' : 'tab-bar__button'}
+              onClick={() => setDashboardPanel(DASHBOARD_PANELS.streaks)}
+              type="button"
+            >
+              Streaks
+            </button>
+            <button
+              className={dashboardPanel === DASHBOARD_PANELS.calendar ? 'tab-bar__button tab-bar__button--active' : 'tab-bar__button'}
+              onClick={() => setDashboardPanel(DASHBOARD_PANELS.calendar)}
+              type="button"
+            >
+              Calendar
+            </button>
           </div>
+
+          {dashboardPanel === DASHBOARD_PANELS.streaks ? (
+            <section className="stats-grid stats-grid--dual">
+              <StatsCard
+                label="Current streak"
+                value={`${currentStreak} day${currentStreak === 1 ? '' : 's'}`}
+                hint={todayEntries ? '今天已经保住连胜。' : '今天打卡一餐就能保住连胜。'}
+                accent="warm"
+              />
+              <StatsCard
+                label="Longest streak"
+                value={`${longestStreak} day${longestStreak === 1 ? '' : 's'}`}
+                hint="目前为止最好的记录。"
+                accent="cool"
+              />
+            </section>
+          ) : (
+            <div className="content-grid">
+              <CalendarView
+                monthDate={visibleMonth}
+                selectedDateKey={selectedDateKey}
+                summaryByDate={summaryByDate}
+                onChangeMonth={handleChangeMonth}
+                onJumpToMonth={handleJumpToMonth}
+                onSelectDate={setSelectedDateKey}
+              />
+              <DayDetails dateKey={selectedDateKey} entries={selectedEntries} />
+            </div>
+          )}
         </main>
       ) : activeTab === TABS.history ? (
         <main>
@@ -262,19 +292,6 @@ export default function App() {
         </main>
       ) : activeTab === TABS.kitchen ? (
         <main>
-          <section className="stats-grid stats-grid--dual">
-            <StatsCard
-              label="Completed days"
-              value={completedDays}
-              hint="Every logged day adds to your food trail."
-            />
-            <StatsCard
-              label="Available ingredients"
-              value={inventory.length}
-              hint="Use them to unlock fixed cookbook dishes."
-              accent="cool"
-            />
-          </section>
           <CollectionKitchenPanel
             inventoryCounts={inventoryCounts}
             availableIngredientIds={availableIngredientIds}
@@ -284,7 +301,7 @@ export default function App() {
         </main>
       ) : (
         <main>
-          <RecipeCollectionPanel
+          <RecipeCollectionDialogPanel
             recipes={ENRICHED_RECIPES}
             unlockedRecipeIds={unlockedRecipeIds}
             selectedRecipe={selectedRecipe}

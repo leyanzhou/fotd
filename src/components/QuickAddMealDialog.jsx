@@ -9,7 +9,22 @@ const DEFAULT_FORM = {
 async function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 1200;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      image.onerror = () => resolve(reader.result);
+      image.src = reader.result;
+    };
     reader.onerror = () => reject(new Error('Unable to read image file.'));
     reader.readAsDataURL(file);
   });
@@ -68,7 +83,9 @@ export function QuickAddMeal({ onAddMeal }) {
       resetForm();
       closeDialog();
     } catch (submitError) {
-      setError(submitError.message || 'Unable to save meal.');
+      const message = submitError.message || 'Unable to save meal.';
+      setError(message);
+      window.alert(message);
     } finally {
       setIsSaving(false);
     }

@@ -147,6 +147,13 @@ img {
   color: var(--muted);
 }
 
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .hero-chip {
   align-self: flex-start;
   min-width: 130px;
@@ -211,6 +218,16 @@ img {
 main {
   display: grid;
   gap: 20px;
+}
+
+.dashboard-switch {
+  display: inline-flex;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.9);
+  border: 1px solid var(--border);
 }
 
 .stats-grid,
@@ -681,6 +698,11 @@ main {
   min-height: 520px;
 }
 
+.recipe-detail-modal {
+  max-width: 520px;
+  min-height: auto;
+}
+
 .recipe-detail {
   display: grid;
   grid-template-columns: 1fr;
@@ -877,8 +899,42 @@ main {
   }
 
   .hero {
-    padding: 22px;
+    gap: 14px;
+    padding: 18px;
     border-radius: 28px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 12vw, 3.15rem);
+    max-width: 9ch;
+  }
+
+  .hero-copy {
+    margin-top: 12px;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .hero-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .hero-chip {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  .hero-chip__label,
+  .eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .hero-chip strong {
+    font-size: 0.95rem;
   }
 
   .calendar-grid {
@@ -910,6 +966,41 @@ main {
 
   .history-list--scroll {
     max-height: 460px;
+  }
+
+  .cookbook-list-card {
+    max-height: 68vh;
+    overflow-y: auto;
+  }
+
+  .recipe-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .recipe-card {
+    border-radius: 16px;
+  }
+
+  .recipe-card__body {
+    padding: 10px;
+  }
+
+  .recipe-card__body h3 {
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .recipe-card__body p {
+    font-size: 0.8rem;
+  }
+
+  .recipe-detail-modal {
+    width: min(100%, 420px);
+  }
+
+  .recipe-detail-card .kitchen-actions .muted {
+    white-space: normal;
   }
 
   .kitchen-actions {
